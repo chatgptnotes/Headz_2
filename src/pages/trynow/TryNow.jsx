@@ -1,15 +1,21 @@
 import React, { useState, useRef } from 'react';
+import { getCachedImage, cacheGeneratedImage } from '../../services/imageCache.js';
+
+// Import test function for development
+if (import.meta.env.DEV) {
+  import('../../utils/testSupabase.js');
+}
 
 const TryNow = () => {
   // State management
   const [selectedStyle, setSelectedStyle] = useState('messy fringe');
   const [selectedColor, setSelectedColor] = useState('#2F1B14');
-  const [uploadedImage, setUploadedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [resultImage, setResultImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState({ message: '', type: '' });
   const [imageFile, setImageFile] = useState(null);
+  const [isFromCache, setIsFromCache] = useState(false);
   
   const fileInputRef = useRef(null);
 
@@ -77,6 +83,8 @@ const TryNow = () => {
     const file = event.target.files[0];
     if (file) {
       setImageFile(file);
+      setResultImage(null); // Clear previous result
+      setIsFromCache(false); // Reset cache status
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview({
@@ -143,10 +151,25 @@ const TryNow = () => {
     }
 
     setIsProcessing(true);
-    setStatus({ message: `🚀 Generating ${selectedStyle}...`, type: '' });
     setResultImage(null);
+    setIsFromCache(false);
 
     try {
+      // First, check if we have a cached version
+      setStatus({ message: "� Checking cache...", type: '' });
+      const cachedImageUrl = await getCachedImage(imageFile, selectedStyle, selectedColor);
+
+      if (cachedImageUrl) {
+        // Found in cache!
+        setResultImage(cachedImageUrl);
+        setIsFromCache(true);
+        setStatus({ message: "⚡ Retrieved from cache!", type: 'success' });
+        return;
+      }
+
+      // Not in cache, generate new image
+      setStatus({ message: `🚀 Generating ${selectedStyle}...`, type: '' });
+
       const maskFile = await createForeheadMask(imageFile);
       const finalPrompt = HAIR_STYLE_PROMPTS[selectedStyle];
 
@@ -173,7 +196,12 @@ const TryNow = () => {
       const data = await response.json();
       const imageUrl = data.data[0].url;
 
+      // Cache the newly generated image
+      setStatus({ message: "💾 Saving to cache...", type: '' });
+      await cacheGeneratedImage(imageFile, selectedStyle, selectedColor, imageUrl);
+
       setResultImage(imageUrl);
+      setIsFromCache(false);
       setStatus({ message: "✅ Transformation Complete!", type: 'success' });
 
     } catch (error) {
@@ -313,13 +341,27 @@ const TryNow = () => {
         {/* Status Message */}
         {status.message && (
           <div className={`text-center p-3 rounded-lg font-medium mb-6 ${
-            status.type === 'error' 
-              ? 'text-red-600 bg-red-50' 
+            status.type === 'error'
+              ? 'text-red-600 bg-red-50'
               : status.type === 'success'
               ? 'text-green-600 bg-green-50 font-bold'
               : 'text-blue-600 bg-blue-50'
           }`}>
             {status.message}
+          </div>
+        )}
+
+        {/* Cache Status Indicator */}
+        {resultImage && (
+          <div className={`text-center p-2 rounded-lg text-sm mb-4 ${
+            isFromCache
+              ? 'text-green-700 bg-green-100 border border-green-200'
+              : 'text-blue-700 bg-blue-100 border border-blue-200'
+          }`}>
+            {isFromCache
+              ? '⚡ This image was retrieved from cache (instant result!)'
+              : '🎨 This image was freshly generated for you'
+            }
           </div>
         )}
 
