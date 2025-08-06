@@ -324,7 +324,7 @@ const SphereGallery = () => {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         :root {
           --radius: max(1300px, 100vw);
           --circ: calc(var(--radius) * 3.14);

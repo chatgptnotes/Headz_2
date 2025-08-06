@@ -1,5 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { getCachedImage, cacheGeneratedImage } from '../../services/imageCache.js';
+import { processImageFile, getFileInfo } from '../../utils/imageConverter.js';
+import CameraCapture from '../../components/CameraCapture.jsx';
+import Navbar from '../../components/common_components/navbar/Navbar.jsx';
+import Header from '../home/components/Header.jsx';
 
 // Import test function for development
 if (import.meta.env.DEV) {
@@ -16,6 +20,9 @@ const TryNow = () => {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [imageFile, setImageFile] = useState(null);
   const [isFromCache, setIsFromCache] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [conversionProgress, setConversionProgress] = useState(0);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   
   const fileInputRef = useRef(null);
 
@@ -79,22 +86,99 @@ const TryNow = () => {
     setSelectedColor(color);
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setResultImage(null); // Clear previous result
-      setIsFromCache(false); // Reset cache status
+  const handleCameraCapture = async (capturedFile) => {
+    // Process the captured photo the same way as uploaded files
+    await processFile(capturedFile);
+  };
+
+  const processFile = async (file) => {
+    // Reset states
+    setResultImage(null);
+    setIsFromCache(false);
+    setIsConverting(true);
+    setConversionProgress(0);
+
+    try {
+      // Get initial file info
+      const fileInfo = getFileInfo(file);
+
+      // Show initial status
+      if (fileInfo.isPng) {
+        setStatus({ message: `✅ PNG format detected - ready to upload!`, type: 'success' });
+      } else {
+        setStatus({ message: `🔄 Converting ${fileInfo.extension.toUpperCase()} to PNG...`, type: '' });
+      }
+
+      // Process the image (convert if needed)
+      const result = await processImageFile(file, (progress) => {
+        setConversionProgress(progress.progress);
+
+        switch (progress.stage) {
+          case 'validating':
+            setStatus({ message: '🔍 Validating image format...', type: '' });
+            break;
+          case 'converting':
+            setStatus({ message: `🔄 Converting to PNG... ${progress.progress}%`, type: '' });
+            break;
+          case 'completed':
+            setStatus({ message: '✅ Image ready for processing!', type: 'success' });
+            break;
+        }
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      // Set the processed file (PNG format)
+      setImageFile(result.processedFile);
+
+      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview({
           src: e.target.result,
-          name: file.name,
-          size: (file.size / 1024 / 1024).toFixed(2) + ' MB'
+          name: result.processedFile.name,
+          size: result.processedInfo.sizeFormatted,
+          originalFormat: result.originalInfo.extension.toUpperCase(),
+          wasConverted: result.wasConverted,
+          isFromCamera: file.name.includes('camera-photo')
         });
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(result.processedFile);
+
+      // Show conversion success message
+      if (result.wasConverted) {
+        setStatus({
+          message: `✅ Successfully converted ${result.originalInfo.extension.toUpperCase()} to PNG!`,
+          type: 'success'
+        });
+      } else {
+        setStatus({
+          message: file.name.includes('camera-photo') ? `📸 Camera photo ready!` : `✅ PNG image loaded successfully!`,
+          type: 'success'
+        });
+      }
+
+    } catch (error) {
+      console.error('Image processing error:', error);
+      setStatus({
+        message: `❌ Error: ${error.message}`,
+        type: 'error'
+      });
+      setImageFile(null);
+      setImagePreview(null);
+    } finally {
+      setIsConverting(false);
+      setConversionProgress(0);
     }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    await processFile(file);
   };
 
   const createForeheadMask = (imageFile) => {
@@ -143,6 +227,12 @@ const TryNow = () => {
     }
     if (!imageFile) {
       setStatus({ message: "❌ Please upload your photo first!", type: 'error' });
+      return;
+    }
+
+    // Verify PNG format (should always be PNG after conversion)
+    if (imageFile.type !== 'image/png') {
+      setStatus({ message: "❌ Image must be in PNG format for OpenAI processing!", type: 'error' });
       return;
     }
     if (!selectedStyle) {
@@ -252,23 +342,30 @@ const TryNow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 flex items-center justify-center p-5">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-8">
-        {/* Header */}
-        <h1 className="text-3xl md:text-4xl font-bold text-center mb-4 bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-          Transform your look instantly with our free AI hairstyle changer
-        </h1>
-        <p className="text-center text-gray-600 mb-6">
-          Upload your photo and try different hairstyles and colors instantly
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100">
+      {/* Header */}
+      <Header />
 
-        {/* Instructions */}
-        <div className="bg-gray-50 border-l-4 border-indigo-500 p-4 mb-6 rounded-lg">
-          <div className="font-bold text-gray-800 mb-2">📋 How to use:</div>
-          <div className="text-gray-600 text-sm leading-relaxed">
-            1. <strong>Select a hairstyle</strong> from the gallery below<br />
-            2. <strong>Upload your photo</strong> using the upload area<br />
-            3. <strong>Click "Transform Hair"</strong> to see the magic happen!
+      {/* Navigation */}
+      <Navbar />
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-auto p-6 md:p-8">
+        {/* Page Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+            AI Hair Transformation Studio
+          </h1>
+          <p className="text-gray-600">
+            Choose your style, upload your photo, and see the magic happen!
+          </p>
+        </div>
+
+        {/* Quick Instructions */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 p-4 mb-6 rounded-lg">
+          <div className="text-center text-sm text-gray-700">
+            <span className="font-semibold">Quick Start:</span> Choose style → Upload/Take photo → Transform! ✨
           </div>
         </div>
 
@@ -320,37 +417,119 @@ const TryNow = () => {
         </div>
 
         {/* Upload Area */}
-        <div 
-          className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center bg-gray-50 mb-6 cursor-pointer hover:border-indigo-500 transition-colors"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Upload Your Photo</h3>
+
           {!imagePreview ? (
-            <>
-              <div className="text-4xl mb-4 opacity-60">📁</div>
-              <div className="text-lg text-gray-700 mb-2">Drag & drop or click to upload</div>
-              <div className="text-sm text-gray-500">Supports JPG, PNG, WebP</div>
-            </>
+            <div className="space-y-4">
+              {/* Upload Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* File Upload */}
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors cursor-pointer bg-gray-50"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="text-3xl mb-3 opacity-60">📁</div>
+                  <div className="text-lg text-gray-700 mb-2">Upload from Device</div>
+                  <div className="text-sm text-gray-500">JPG, PNG, WebP, BMP, GIF, TIFF</div>
+                  <div className="text-xs text-blue-600 mt-2">
+                    ✨ Auto-converts to PNG
+                  </div>
+                </div>
+
+                {/* Camera Capture */}
+                <div
+                  className="border-2 border-dashed border-green-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors cursor-pointer bg-green-50"
+                  onClick={() => setIsCameraOpen(true)}
+                >
+                  <div className="text-3xl mb-3 opacity-60">�</div>
+                  <div className="text-lg text-gray-700 mb-2">Take Photo</div>
+                  <div className="text-sm text-gray-500">Use your camera</div>
+                  <div className="text-xs text-green-600 mt-2">
+                    📱 Instant capture
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="text-center text-sm text-gray-500 mt-4">
+                Choose an option above to get started with your hair transformation
+              </div>
+            </div>
           ) : (
-            <div>
-              <div className="text-lg text-green-600 font-bold mb-4">Image uploaded successfully!</div>
-              <img 
-                src={imagePreview.src} 
-                alt="Preview" 
-                className="max-w-full max-h-48 mx-auto rounded-lg shadow-md mb-4"
-              />
-              <div className="text-sm text-gray-600">
-                <span>{imagePreview.name}</span> - <span>{imagePreview.size}</span>
+            <div className="text-center">
+              <div className="text-lg text-green-600 font-bold mb-4">
+                {imagePreview.isFromCamera ? '📸 Camera photo ready!' :
+                 imagePreview.wasConverted ? '🔄 Image converted & ready!' :
+                 '✅ Image uploaded successfully!'}
+              </div>
+
+              <div className="relative inline-block">
+                <img
+                  src={imagePreview.src}
+                  alt="Preview"
+                  className="max-w-full max-h-48 mx-auto rounded-lg shadow-md mb-4"
+                />
+
+                {/* Remove Image Button */}
+                <button
+                  onClick={() => {
+                    setImagePreview(null);
+                    setImageFile(null);
+                    setResultImage(null);
+                    setIsFromCache(false);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                  aria-label="Remove image"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="text-sm text-gray-600 space-y-1">
+                <div>
+                  <span className="font-medium">{imagePreview.name}</span> - <span>{imagePreview.size}</span>
+                </div>
+                {imagePreview.wasConverted && (
+                  <div className="text-blue-600 text-xs bg-blue-50 px-2 py-1 rounded inline-block">
+                    ✓ Converted from {imagePreview.originalFormat} to PNG
+                  </div>
+                )}
+                {imagePreview.isFromCamera && (
+                  <div className="text-green-600 text-xs bg-green-50 px-2 py-1 rounded inline-block">
+                    📸 Captured from camera
+                  </div>
+                )}
+                <div className="text-xs text-green-600">
+                  🎯 Ready for OpenAI processing
+                </div>
+              </div>
+
+              {/* Change Photo Button */}
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setImagePreview(null);
+                    setImageFile(null);
+                    setResultImage(null);
+                    setIsFromCache(false);
+                  }}
+                  className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                >
+                  📷 Change Photo
+                </button>
               </div>
             </div>
           )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/bmp,image/gif,image/tiff"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
         </div>
 
         {/* Transform Button */}
@@ -378,6 +557,27 @@ const TryNow = () => {
               : 'text-blue-600 bg-blue-50'
           }`}>
             {status.message}
+          </div>
+        )}
+
+        {/* Conversion Progress */}
+        {isConverting && (
+          <div className="mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-700">Converting Image</span>
+                <span className="text-sm text-blue-600">{conversionProgress}%</span>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${conversionProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                Converting your image to PNG format for OpenAI compatibility...
+              </p>
+            </div>
           </div>
         )}
 
@@ -413,6 +613,14 @@ const TryNow = () => {
             </button>
           </div>
         )}
+
+        {/* Camera Capture Modal */}
+        <CameraCapture
+          isOpen={isCameraOpen}
+          onCapture={handleCameraCapture}
+          onClose={() => setIsCameraOpen(false)}
+        />
+        </div>
       </div>
     </div>
   );
