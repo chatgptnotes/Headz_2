@@ -1,16 +1,22 @@
 import React, { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const location = useLocation()
 
   const menuItems = [
-    { name: 'Home', href: '/' },
-    { name: 'Try Hair', href: '/trynow' },
-    { name: 'Styles', href: '#styles' },
-    { name: 'Gallery', href: '#gallery' },
-    { name: 'About', href: '#about' },
-    { name: 'Contact', href: '#contact' }
+    { name: 'Home', href: '/', isRoute: true },
+    { name: 'Try Hair', href: '/trynow', isRoute: true },
+    { name: 'Styles', href: '/styles', isRoute: true },
+    { name: 'Gallery', href: '/gallery', isRoute: true },
+    { name: 'About', href: '/about', isRoute: true },
+    { name: 'Contact', href: '/contact', isRoute: true }
   ]
+
+  const isActiveRoute = (href) => {
+    return location.pathname === href
+  }
 
   return (
     <nav className="bg-white shadow-md border-b border-gray-200">
@@ -18,15 +24,31 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            {menuItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
-              >
-                {item.name}
-              </a>
-            ))}
+            {menuItems.map((item) => {
+              const isActive = item.isRoute && isActiveRoute(item.href)
+              const baseClasses = "font-medium transition-colors duration-200"
+              const activeClasses = isActive 
+                ? "text-purple-600 border-b-2 border-purple-600 pb-1" 
+                : "text-gray-700 hover:text-purple-600"
+              
+              return item.isRoute ? (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`${baseClasses} ${activeClasses}`}
+                >
+                  {item.name}
+                </Link>
+              ) : (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className={`${baseClasses} ${activeClasses}`}
+                >
+                  {item.name}
+                </a>
+              )
+            })}
           </div>
 
           {/* Mobile Menu Button */}
@@ -51,7 +73,7 @@ const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search hairstyles..."
-                className="w-64 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-48 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <svg
                 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400"
@@ -69,16 +91,32 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
-              {menuItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="block px-3 py-2 text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </a>
-              ))}
+              {menuItems.map((item) => {
+                const isActive = item.isRoute && isActiveRoute(item.href)
+                const activeClasses = isActive 
+                  ? "text-purple-600 bg-purple-50" 
+                  : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
+                
+                return item.isRoute ? (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`block px-3 py-2 font-medium transition-colors duration-200 rounded-lg ${activeClasses}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className={`block px-3 py-2 font-medium transition-colors duration-200 rounded-lg ${activeClasses}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.name}
+                  </a>
+                )
+              })}
               <div className="px-3 py-2">
                 <input
                   type="text"

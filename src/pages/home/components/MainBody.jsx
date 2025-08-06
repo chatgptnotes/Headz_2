@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import SphereGallery from '../../../components/SphereGallery'
 
 const MainBody = () => {
@@ -48,12 +49,12 @@ const MainBody = () => {
               Explore different hairstyles in our interactive 3D gallery.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto">
-              <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 shadow-lg">
+              <Link to="/trynow" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 shadow-lg text-center">
                 Try Hair Now
-              </button>
-              <button className="border-2 border-white text-white bg-white/10 backdrop-blur-sm px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-all duration-200 shadow-lg">
+              </Link>
+              <a href="#gallery" className="border-2 border-white text-white bg-white/10 backdrop-blur-sm px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-all duration-200 shadow-lg text-center">
                 View Gallery
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -99,9 +100,9 @@ const MainBody = () => {
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-2">{style.name}</h3>
-                  <button className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                  <Link to="/trynow" className="block w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-center">
                     Try This Style
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}
@@ -119,12 +120,12 @@ const MainBody = () => {
             Join thousands of users who have found their perfect hairstyle with HeadZ
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors">
+            <Link to="/trynow" className="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors text-center">
               Start Free Trial
-            </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-all duration-200">
+            </Link>
+            <Link to="/signup" className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-all duration-200 text-center">
               Learn More
-            </button>
+            </Link>
           </div>
         </div>
       </section>
