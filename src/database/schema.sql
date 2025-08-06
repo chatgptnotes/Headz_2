@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS generated_images (
   hairstyle VARCHAR(100) NOT NULL,
   hair_color VARCHAR(7) NOT NULL, -- Hex color code
   generated_image_url TEXT NOT NULL,
+  url_expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '50 minutes'), -- OpenAI URLs expire in ~1 hour
+  is_permanent BOOLEAN DEFAULT FALSE, -- Whether URL is permanent (Supabase) or temporary (OpenAI)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
