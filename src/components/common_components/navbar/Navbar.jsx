@@ -8,10 +8,10 @@ const Navbar = () => {
   const menuItems = [
     { name: 'Home', href: '/', isRoute: true },
     { name: 'Try Hair', href: '/trynow', isRoute: true },
-    { name: 'Styles', href: '#styles', isRoute: false },
-    { name: 'Gallery', href: '#gallery', isRoute: false },
-    { name: 'About', href: '#about', isRoute: false },
-    { name: 'Contact', href: '#contact', isRoute: false }
+    { name: 'Styles', href: '/styles', isRoute: true },
+    { name: 'Gallery', href: '/gallery', isRoute: true },
+    { name: 'About', href: '/about', isRoute: true },
+    { name: 'Contact', href: '/contact', isRoute: true }
   ]
 
   const isActiveRoute = (href) => {
