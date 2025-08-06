@@ -1,4 +1,5 @@
 import React from 'react'
+import SphereGallery from '../../../components/SphereGallery'
 
 const MainBody = () => {
   const features = [
@@ -33,23 +34,24 @@ const MainBody = () => {
 
   return (
     <main className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-purple-50 to-blue-50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+      {/* Interactive Sphere Gallery Hero */}
+      <section className="relative">
+        <SphereGallery />
+        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+          <div className="text-center bg-black/50 backdrop-blur-md rounded-3xl px-8 py-12 mx-4 max-w-4xl">
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
               Try Before You
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600"> Style</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400"> Style</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-100 mb-8 max-w-2xl mx-auto drop-shadow-lg">
               Transform your look with our virtual hair try-on platform. 
-              See how different hairstyles look on your bald head before making any decisions.
+              Explore different hairstyles in our interactive 3D gallery.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto">
+              <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 shadow-lg">
                 Try Hair Now
               </button>
-              <button className="border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-purple-600 hover:text-white transition-all duration-200">
+              <button className="border-2 border-white text-white bg-white/10 backdrop-blur-sm px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-all duration-200 shadow-lg">
                 View Gallery
               </button>
             </div>
