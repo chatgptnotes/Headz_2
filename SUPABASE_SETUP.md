@@ -47,7 +47,40 @@ This will create:
 - Row Level Security policies
 - Automatic timestamp updates
 
-## Step 5: Test the Integration
+## Step 5: Create Storage Bucket (Important!)
+
+**Why needed:** OpenAI image URLs expire after 1 hour. We need permanent storage.
+
+1. In your Supabase dashboard, go to **Storage**
+2. Click **"New bucket"**
+3. Enter bucket details:
+   - **Name**: `generated-images`
+   - **Public bucket**: ✅ **Enable** (so images can be accessed via URL)
+   - **File size limit**: 50MB (optional)
+   - **Allowed MIME types**: `image/png,image/jpeg` (optional)
+4. Click **"Create bucket"**
+
+### Set Bucket Policies
+
+1. In the Storage section, click on your `generated-images` bucket
+2. Go to **"Policies"** tab
+3. Click **"New policy"**
+4. Choose **"For full customization"**
+5. Add this policy:
+
+```sql
+CREATE POLICY "Public read access" ON storage.objects
+FOR SELECT USING (bucket_id = 'generated-images');
+
+CREATE POLICY "Authenticated upload access" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'generated-images');
+```
+
+This allows:
+- ✅ Anyone to read/view images (public access)
+- ✅ Your app to upload new images
+
+## Step 6: Test the Integration
 
 1. Start your development server: `npm run dev`
 2. Upload an image and generate a hairstyle
@@ -74,6 +107,8 @@ This will create:
 - **Cost Savings**: Reduces OpenAI API calls for duplicate requests
 - **Consistent Results**: Same input always returns the same output
 - **Better UX**: Users get immediate feedback for repeated combinations
+- **Permanent Storage**: Images never expire (unlike OpenAI URLs that expire in 1 hour)
+- **Reliable Access**: Images remain accessible indefinitely
 
 ## Security Notes
 

@@ -157,10 +157,18 @@ const TryNow = () => {
     try {
       // First, check if we have a cached version
       setStatus({ message: "� Checking cache...", type: '' });
+      console.log('🔍 Checking cache for:', {
+        fileName: imageFile.name,
+        style: selectedStyle,
+        color: selectedColor
+      });
+
       const cachedImageUrl = await getCachedImage(imageFile, selectedStyle, selectedColor);
+      console.log('🔍 Cache result:', cachedImageUrl ? 'FOUND' : 'NOT FOUND');
 
       if (cachedImageUrl) {
         // Found in cache!
+        console.log('⚡ Using cached image:', cachedImageUrl);
         setResultImage(cachedImageUrl);
         setIsFromCache(true);
         setStatus({ message: "⚡ Retrieved from cache!", type: 'success' });
@@ -198,7 +206,15 @@ const TryNow = () => {
 
       // Cache the newly generated image
       setStatus({ message: "💾 Saving to cache...", type: '' });
-      await cacheGeneratedImage(imageFile, selectedStyle, selectedColor, imageUrl);
+      console.log('💾 Caching new image:', {
+        fileName: imageFile.name,
+        style: selectedStyle,
+        color: selectedColor,
+        imageUrl: imageUrl
+      });
+
+      const cacheSuccess = await cacheGeneratedImage(imageFile, selectedStyle, selectedColor, imageUrl);
+      console.log('💾 Cache save result:', cacheSuccess ? 'SUCCESS' : 'FAILED');
 
       setResultImage(imageUrl);
       setIsFromCache(false);
