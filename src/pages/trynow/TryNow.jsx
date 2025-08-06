@@ -204,21 +204,35 @@ const TryNow = () => {
       const data = await response.json();
       const imageUrl = data.data[0].url;
 
-      // Cache the newly generated image
-      setStatus({ message: "💾 Saving to cache...", type: '' });
-      console.log('💾 Caching new image:', {
-        fileName: imageFile.name,
-        style: selectedStyle,
-        color: selectedColor,
-        imageUrl: imageUrl
-      });
-
-      const cacheSuccess = await cacheGeneratedImage(imageFile, selectedStyle, selectedColor, imageUrl);
-      console.log('💾 Cache save result:', cacheSuccess ? 'SUCCESS' : 'FAILED');
-
+      // Set the result image first
       setResultImage(imageUrl);
       setIsFromCache(false);
       setStatus({ message: "✅ Transformation Complete!", type: 'success' });
+
+      // Cache the newly generated image (in background)
+      setTimeout(async () => {
+        setStatus({ message: "💾 Saving to cache...", type: '' });
+        console.log('💾 Caching new image:', {
+          fileName: imageFile.name,
+          style: selectedStyle,
+          color: selectedColor,
+          imageUrl: imageUrl
+        });
+
+        const cacheSuccess = await cacheGeneratedImage(
+          imageFile,
+          selectedStyle,
+          selectedColor,
+          imageUrl
+        );
+        console.log('💾 Cache save result:', cacheSuccess ? 'SUCCESS' : 'FAILED');
+
+        if (cacheSuccess) {
+          setStatus({ message: "✅ Image cached for 50 minutes!", type: 'success' });
+        } else {
+          setStatus({ message: "⚠️ Caching failed, but image is ready!", type: 'success' });
+        }
+      }, 1000); // Wait 1 second
 
     } catch (error) {
       setStatus({ message: `Error: ${error.message}`, type: 'error' });
