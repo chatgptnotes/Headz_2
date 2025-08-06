@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { getCachedImage, cacheGeneratedImage } from '../../services/imageCache.js';
 
 // Import test function for development
@@ -58,9 +59,24 @@ const TryNow = () => {
   };
 
   const hairstyles = [
-    { name: 'messy fringe', image: 'images/image1.png', alt: 'Messy Fringe' },
-    { name: 'slick back', image: 'images/image2.png', alt: 'Slick Back' },
-    { name: 'Textured Messy Quiff', image: 'images/image3.png', alt: 'Textured Messy Quiff' }
+    { 
+      name: 'messy fringe', 
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face', 
+      alt: 'Messy Fringe',
+      description: 'Modern textured fringe with natural movement'
+    },
+    { 
+      name: 'slick back', 
+      image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=400&fit=crop&crop=face', 
+      alt: 'Slick Back',
+      description: 'Classic professional slicked-back style'
+    },
+    { 
+      name: 'Textured Messy Quiff', 
+      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face', 
+      alt: 'Textured Messy Quiff',
+      description: 'Voluminous quiff with textured finish'
+    }
   ];
 
   const colors = [
@@ -252,8 +268,29 @@ const TryNow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 flex items-center justify-center p-5">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600">
+      {/* Navigation Bar */}
+      <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <span className="text-indigo-600 font-bold text-lg">H</span>
+              </div>
+              <span className="text-white font-bold text-xl">HeadZ</span>
+            </Link>
+            <Link
+              to="/"
+              className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
+            >
+              ← Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center p-5 pt-8">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-8">
         {/* Header */}
         <h1 className="text-3xl md:text-4xl font-bold text-center mb-4 bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
           Transform your look instantly with our free AI hairstyle changer
@@ -287,17 +324,35 @@ const TryNow = () => {
               key={index}
               className={`cursor-pointer transition-all duration-300 hover:scale-105 ${
                 selectedStyle === style.name 
-                  ? 'ring-4 ring-green-500 ring-opacity-50' 
-                  : ''
+                  ? 'ring-4 ring-green-500 ring-opacity-50 shadow-lg' 
+                  : 'hover:shadow-md'
               }`}
               onClick={() => selectHairstyle(style.name)}
             >
-              <div className="h-48 bg-gray-200 rounded-xl overflow-hidden shadow-md">
-                <img 
-                  src={style.image} 
-                  alt={style.alt}
-                  className="w-full h-full object-cover"
-                />
+              <div className="bg-white rounded-xl overflow-hidden shadow-md">
+                <div className="h-48 bg-gray-200 overflow-hidden">
+                  <img 
+                    src={style.image} 
+                    alt={style.alt}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2 capitalize">
+                    {style.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {style.description}
+                  </p>
+                  {selectedStyle === style.name && (
+                    <div className="mt-3 flex items-center text-green-600 text-sm font-medium">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Selected
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -413,6 +468,7 @@ const TryNow = () => {
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
